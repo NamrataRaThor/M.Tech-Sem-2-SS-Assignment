@@ -1,0 +1,23 @@
+{
+  "name": "eventsphere",
+  "version": "1.0.0",
+  "description": "EventSphere: Distributed Event Ticketing & Seat Reservation Platform",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "docker:up": "docker-compose -f infra/docker/docker-compose.yml up -d",
+    "docker:down": "docker-compose -f infra/docker/docker-compose.yml down"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "turbo": "^1.10.0",
+    "prettier": "^3.0.0"
+  }
+}

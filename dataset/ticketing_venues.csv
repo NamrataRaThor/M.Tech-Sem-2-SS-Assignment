@@ -1,0 +1,16 @@
+venue_id,name,city,area,capacity,venue_type,created_at
+1,Urban Auditorium,Delhi,Baner,1108,Indoor Arena,2025-06-01 18:17:50
+2,Crown Hall,Pune,Salt Lake,1009,Auditorium,2024-06-11 11:35:36
+3,Grand Auditorium,Pune,Indiranagar,525,Convention Hall,2024-04-08 14:51:49
+4,Metro Stadium,Chennai,Koramangala,946,Convention Hall,2024-10-24 02:01:49
+5,Metro Arena,Kolkata,Andheri,1106,Convention Hall,2025-07-02 07:56:32
+6,Urban Auditorium,Hyderabad,Bandra,860,Open Ground,2024-09-19 03:02:41
+7,Crown Stadium,Hyderabad,Andheri,900,Open Ground,2025-05-18 17:48:40
+8,Urban Center,Kolkata,Baner,528,Open Ground,2024-06-24 02:49:17
+9,Grand Auditorium,Pune,Baner,1004,Open Ground,2025-08-26 18:28:01
+10,Royal Arena,Ahmedabad,Salt Lake,368,Convention Hall,2025-12-26 17:56:51
+11,Crown Arena,Mumbai,Koramangala,1082,Indoor Arena,2024-04-12 19:06:42
+12,Metro Ground,Pune,Indiranagar,544,Auditorium,2024-12-09 14:11:26
+13,Grand Arena,Mumbai,Indiranagar,838,Open Ground,2025-03-05 06:17:36
+14,Urban Hall,Bengaluru,Salt Lake,1109,Stadium,2025-03-27 04:33:33
+15,Royal Stadium,Hyderabad,Andheri,822,Indoor Arena,2025-05-27 17:22:08

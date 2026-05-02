@@ -1,0 +1,242 @@
+# --- Identity Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identity-service
+  namespace: eventsphere
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: identity-service
+  template:
+    metadata:
+      labels:
+        app: identity-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8081"
+    spec:
+      containers:
+      - name: identity-service
+        image: eventsphere/identity-service:latest
+        ports:
+        - containerPort: 8081
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: eventsphere-secrets
+              key: identity-db-url
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: eventsphere-secrets
+              key: jwt-secret
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8081
+          initialDelaySeconds: 15
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+          initialDelaySeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: identity-service
+  namespace: eventsphere
+spec:
+  selector:
+    app: identity-service
+  ports:
+  - port: 8081
+---
+# --- Catalog Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-service
+  namespace: eventsphere
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: catalog-service
+  template:
+    metadata:
+      labels:
+        app: catalog-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8082"
+    spec:
+      containers:
+      - name: catalog-service
+        image: eventsphere/catalog-service:latest
+        ports:
+        - containerPort: 8082
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: eventsphere-secrets
+              key: catalog-db-url
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8082
+          initialDelaySeconds: 15
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8082
+          initialDelaySeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog-service
+  namespace: eventsphere
+spec:
+  selector:
+    app: catalog-service
+  ports:
+  - port: 8082
+---
+# --- Seating Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: seating-service
+  namespace: eventsphere
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: seating-service
+  template:
+    metadata:
+      labels:
+        app: seating-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8083"
+    spec:
+      containers:
+      - name: seating-service
+        image: eventsphere/seating-service:latest
+        ports:
+        - containerPort: 8083
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: eventsphere-secrets
+              key: seating-db-url
+        - name: REDIS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: eventsphere-config
+              key: REDIS_URL
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8083
+          initialDelaySeconds: 15
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8083
+          initialDelaySeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: seating-service
+  namespace: eventsphere
+spec:
+  selector:
+    app: seating-service
+  ports:
+  - port: 8083
+---
+# --- Order Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  namespace: eventsphere
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8085"
+    spec:
+      containers:
+      - name: order-service
+        image: eventsphere/order-service:latest
+        ports:
+        - containerPort: 8085
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: eventsphere-secrets
+              key: order-db-url
+        - name: KAFKA_BROKERS
+          valueFrom:
+            configMapKeyRef:
+              name: eventsphere-config
+              key: KAFKA_BROKERS
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8085
+          initialDelaySeconds: 15
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8085
+          initialDelaySeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+  namespace: eventsphere
+spec:
+  selector:
+    app: order-service
+  ports:
+  - port: 8085

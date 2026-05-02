@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Venue {
+  id        Int      @id @default(autoincrement())
+  name      String
+  city      String
+  area      String?
+  capacity  Int
+  type      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  events    Event[]
+
+  @@map("venues")
+}
+
+model Event {
+  id          Int         @id @default(autoincrement())
+  venueId     Int
+  title       String
+  type        String
+  city        String
+  status      EventStatus @default(ON_SALE)
+  startTime   DateTime
+  endTime     DateTime
+  basePrice   Float
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  venue       Venue       @relation(fields: [venueId], references: [id])
+
+  @@map("events")
+}
+
+enum EventStatus {
+  ON_SALE
+  SOLD_OUT
+  CANCELLED
+}

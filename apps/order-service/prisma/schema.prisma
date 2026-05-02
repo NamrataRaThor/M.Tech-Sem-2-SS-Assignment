@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Order {
+  id          Int           @id @default(autoincrement())
+  userId      Int
+  eventId     Int
+  subtotal    Float
+  tax         Float
+  total       Float
+  status      OrderStatus   @default(PENDING)
+  expiresAt   DateTime
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  items       OrderItem[]
+
+  @@index([userId])
+  @@index([eventId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  seatId    Int
+  price     Float
+  order     Order    @relation(fields: [orderId], references: [id])
+
+  @@map("order_items")
+}
+
+model IdempotencyRecord {
+  key             String   @id
+  responseStatus  Int
+  responseBody    Json
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+
+  @@map("idempotency_records")
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+  CANCELLED
+}

@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Ticket {
+  id           String       @id @default(uuid())
+  orderId      Int
+  userId       Int
+  eventId      Int
+  seatId       Int
+  ticketNumber String       @unique
+  qrCode       String
+  status       TicketStatus @default(VALID)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([orderId])
+  @@index([userId])
+  @@map("tickets")
+}
+
+enum TicketStatus {
+  VALID
+  USED
+  VOIDED
+}

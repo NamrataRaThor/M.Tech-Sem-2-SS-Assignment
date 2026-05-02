@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: eventsphere
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: eventsphere-secrets
+  namespace: eventsphere
+type: Opaque
+stringData:
+  jwt-secret: "super-secret-key"
+  postgres-password: "password"
+  # Service specific DB URLs
+  identity-db-url: "postgresql://admin:password@postgres:5432/identity_db"
+  catalog-db-url: "postgresql://admin:password@postgres:5432/catalog_db"
+  seating-db-url: "postgresql://admin:password@postgres:5432/seating_db"
+  order-db-url: "postgresql://admin:password@postgres:5432/order_db"
+  payment-db-url: "postgresql://admin:password@postgres:5432/payment_db"
+  ticket-db-url: "postgresql://admin:password@postgres:5432/ticket_db"
+  notification-db-url: "postgresql://admin:password@postgres:5432/notification_db"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: eventsphere-config
+  namespace: eventsphere
+data:
+  KAFKA_BROKERS: "kafka:9092"
+  REDIS_URL: "redis://redis:6379"
+  AUTH_SERVICE_URL: "http://identity-service:8081"
+  CATALOG_SERVICE_URL: "http://catalog-service:8082"
+  SEATING_SERVICE_URL: "http://seating-service:8083"
+  ORDER_SERVICE_URL: "http://order-service:8085"
+  PAYMENT_SERVICE_URL: "http://payment-service:8084"
+  TICKET_SERVICE_URL: "http://ticket-service:8086"
+  NOTIFICATION_SERVICE_URL: "http://notification-service:8087"
