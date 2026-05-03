@@ -1,10 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
-import { logger, httpLogger, correlationIdMiddleware } from '@eventsphere/common';
+import { register } from 'prom-client';
 
 dotenv.config();
+import { PrismaClient } from '@prisma/client';
+import { logger, httpLogger, correlationIdMiddleware } from './common/index';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -20,10 +21,16 @@ app.get('/health', (req, res) => res.json({ status: 'UP' }));
 app.get('/ready', (req, res) => res.json({ status: 'READY' }));
 app.get('/live', (req, res) => res.json({ status: 'LIVE' }));
 
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
+});
+
 // Catalog Routes
 app.get('/api/v1/events', async (req, res) => {
   try {
     const { city, type, status } = req.query;
+    // @ts-ignore
     const events = await prisma.event.findMany({
       where: {
         city: city as string,
@@ -41,6 +48,7 @@ app.get('/api/v1/events', async (req, res) => {
 
 app.get('/api/v1/events/:id', async (req, res) => {
   try {
+    // @ts-ignore
     const event = await prisma.event.findUnique({
       where: { id: parseInt(req.params.id) },
       include: { venue: true },

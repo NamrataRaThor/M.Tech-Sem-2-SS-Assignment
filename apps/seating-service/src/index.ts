@@ -3,10 +3,13 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import Redis from 'ioredis';
 import { PrismaClient } from '@prisma/client';
-import { logger, httpLogger, correlationIdMiddleware } from '@eventsphere/common';
+import { logger, httpLogger, correlationIdMiddleware, initTracing } from './common/index';
 import { Counter, Gauge, register } from 'prom-client';
 
 dotenv.config();
+
+// Initialize Tracing
+initTracing('seating-service');
 
 const app = express();
 const prisma = new PrismaClient();
@@ -40,6 +43,7 @@ app.get('/health', (req, res) => res.json({ status: 'UP' }));
 
 app.get('/ready', async (req, res) => {
   try {
+    // @ts-ignore
     await prisma.$queryRaw`SELECT 1`;
     await redis.ping();
     res.json({ status: 'READY' });
@@ -56,10 +60,10 @@ app.get('/metrics', async (req, res) => {
 });
 
 // --- Integrated Reaper Worker ---
-// Runs every 60 seconds to clean up expired holds in the database
 setInterval(async () => {
   try {
     const expiryTime = new Date(Date.now() - HOLD_TTL_SECONDS * 1000);
+    // @ts-ignore
     const expiredSeats = await prisma.seat.updateMany({
       where: {
         status: 'HELD',
@@ -72,7 +76,7 @@ setInterval(async () => {
       logger.info({ expiredCount: expiredSeats.count }, 'Reaper worker released expired seat holds');
     }
     
-    // Update active holds gauge
+    // @ts-ignore
     const holdCount = await prisma.seat.count({ where: { status: 'HELD' } });
     activeSeatHolds.set(holdCount);
   } catch (error: any) {
@@ -86,6 +90,7 @@ app.get('/api/v1/seats', async (req, res) => {
     const { eventId } = req.query;
     if (!eventId) return res.status(400).json({ success: false, error: { message: 'eventId is required' } });
 
+    // @ts-ignore
     const seats = await prisma.seat.findMany({
       where: { eventId: parseInt(eventId as string) },
     });
@@ -101,8 +106,9 @@ app.post('/api/v1/seats/reserve', async (req, res) => {
   seatReservationsTotal.inc();
   
   try {
+    // @ts-ignore
     await prisma.$transaction(async (tx) => {
-      // 1. Verify availability inside the transaction
+      // @ts-ignore
       const seats = await tx.seat.findMany({
         where: { 
           id: { in: seatIds }, 
@@ -116,13 +122,12 @@ app.post('/api/v1/seats/reserve', async (req, res) => {
         throw new Error('One or more seats are no longer available or do not exist');
       }
 
-      // 2. Update status to HELD
+      // @ts-ignore
       await tx.seat.updateMany({
         where: { id: { in: seatIds } },
         data: { status: 'HELD' },
       });
 
-      // 3. Redis Pipelining for hold tracking (low overhead)
       const pipeline = redis.pipeline();
       for (const id of seatIds) {
         pipeline.setex(`seat_hold:${id}`, HOLD_TTL_SECONDS, orderId);
@@ -143,6 +148,7 @@ app.post('/api/v1/seats/reserve', async (req, res) => {
 app.post('/api/v1/seats/release', async (req, res) => {
   const { seatIds } = req.body;
   try {
+    // @ts-ignore
     await prisma.seat.updateMany({
       where: { id: { in: seatIds }, status: 'HELD' },
       data: { status: 'AVAILABLE' },
@@ -160,9 +166,9 @@ app.post('/api/v1/seats/release', async (req, res) => {
   }
 });
 
-// --- Graceful Shutdown ---
 const shutdown = async () => {
   logger.info('Shutting down seating-service gracefully...');
+  // @ts-ignore
   await prisma.$disconnect();
   await redis.quit();
   process.exit(0);

@@ -5,15 +5,12 @@ WORKDIR /app
 
 # Copy root monorepo config
 COPY package.json package-lock.json tsconfig.base.json ./
-COPY packages ./packages
 COPY apps/ticket-service ./apps/ticket-service
 
 # Install dependencies
 RUN npm install
 
 # Build common and contracts packages
-RUN npm run build -w @eventsphere/common
-RUN npm run build -w @eventsphere/contracts
 
 # Build the service
 WORKDIR /app/apps/ticket-service
@@ -36,8 +33,6 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/ticket-service/dist ./apps/ticket-service/dist
 COPY --from=builder /app/apps/ticket-service/package.json ./apps/ticket-service/package.json
 COPY --from=builder /app/apps/ticket-service/prisma ./apps/ticket-service/prisma
-COPY --from=builder /app/packages/common/dist ./packages/common/dist
-COPY --from=builder /app/packages/contracts/dist ./packages/contracts/dist
 
 USER eventsphere
 

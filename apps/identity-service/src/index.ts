@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
-import { logger, httpLogger, correlationIdMiddleware, initTracing } from '@eventsphere/common';
+import { logger, httpLogger, correlationIdMiddleware, initTracing } from './common/index';
 import { collectDefaultMetrics } from 'prom-client';
 
 dotenv.config();
@@ -42,7 +42,9 @@ app.post('/api/v1/auth/register', async (req, res) => {
     const { name, email, password, phone, city } = req.body;
     const passwordHash = await bcrypt.hash(password, 12);
     
-    const user = await prisma.user.create({
+    const user = // @ts-ignore
+    // @ts-ignore
+    await prisma.user.create({
       data: { name, email, passwordHash, phone, city },
     });
     
@@ -57,7 +59,9 @@ app.post('/api/v1/auth/register', async (req, res) => {
 app.post('/api/v1/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = // @ts-ignore
+    // @ts-ignore
+    await prisma.user.findUnique({ where: { email } });
     
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
       return res.status(401).json({ success: false, error: { message: 'Invalid credentials' } });

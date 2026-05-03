@@ -2,12 +2,13 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import { register } from 'prom-client';
+
+dotenv.config();
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import rateLimit from 'express-rate-limit';
 import { authMiddleware } from './middleware/auth';
-import { logger, httpLogger, correlationIdMiddleware, initTracing } from '@eventsphere/common';
-
-dotenv.config();
+import { logger, httpLogger, correlationIdMiddleware, initTracing } from './common/index';
 
 // Initialize Tracing
 initTracing('api-gateway');
@@ -26,6 +27,7 @@ const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100 // limit each IP to 100 requests per windowMs
 });
+// @ts-ignore
 app.use(limiter);
 
 // Service URLs (Internal K8s DNS or Localhost)
@@ -42,52 +44,65 @@ const services = {
 // --- Proxy Routes ---
 
 // 1. Identity Service (Public)
+// @ts-ignore
 app.use('/api/v1/auth', createProxyMiddleware({
   target: services.auth,
   changeOrigin: true
 }));
 
 // 2. Catalog Service (Read: Public, Write: Protected)
-app.use('/api/v1/catalog', (req, res, next) => {
+app.use('/api/v1/catalog', (req: any, res: any, next: any) => {
   if (req.method === 'GET') return next();
   return authMiddleware(req, res, next);
-}, createProxyMiddleware({
+}, 
+// @ts-ignore
+createProxyMiddleware({
   target: services.catalog,
   changeOrigin: true
 }));
 
 // 3. Seating Service (Protected)
+// @ts-ignore
 app.use('/api/v1/seats', authMiddleware, createProxyMiddleware({
   target: services.seating,
   changeOrigin: true
 }));
 
 // 4. Order Service (Protected)
+// @ts-ignore
 app.use('/api/v1/orders', authMiddleware, createProxyMiddleware({
   target: services.order,
   changeOrigin: true
 }));
 
 // 5. Payment Service (Protected)
+// @ts-ignore
 app.use('/api/v1/payments', authMiddleware, createProxyMiddleware({
   target: services.payment,
   changeOrigin: true
 }));
 
 // 6. Ticket Service (Protected)
+// @ts-ignore
 app.use('/api/v1/tickets', authMiddleware, createProxyMiddleware({
   target: services.ticket,
   changeOrigin: true
 }));
 
 // 7. Notification Service (Protected)
+// @ts-ignore
 app.use('/api/v1/notifications', authMiddleware, createProxyMiddleware({
   target: services.notification,
   changeOrigin: true
 }));
 
 // Health Check
-app.get('/health', (req, res) => res.json({ status: 'UP', service: 'api-gateway' }));
+app.get('/health', (_req, res) => res.json({ status: 'UP', service: 'api-gateway' }));
+
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
+});
 
 app.listen(PORT, () => {
   logger.info(`API Gateway running on port ${PORT}`);

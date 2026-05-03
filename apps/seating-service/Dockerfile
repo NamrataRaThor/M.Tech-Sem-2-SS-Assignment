@@ -5,14 +5,12 @@ WORKDIR /app
 
 # Copy root monorepo config
 COPY package.json package-lock.json tsconfig.base.json ./
-COPY packages ./packages
 COPY apps/seating-service ./apps/seating-service
 
 # Install dependencies
 RUN npm install
 
 # Build common and contracts packages
-RUN npm run build -w @eventsphere/common
 
 # Build the service
 WORKDIR /app/apps/seating-service
@@ -35,7 +33,6 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/seating-service/dist ./apps/seating-service/dist
 COPY --from=builder /app/apps/seating-service/package.json ./apps/seating-service/package.json
 COPY --from=builder /app/apps/seating-service/prisma ./apps/seating-service/prisma
-COPY --from=builder /app/packages/common/dist ./packages/common/dist
 
 USER eventsphere
 

@@ -1,4 +1,4 @@
-import { logger } from '@eventsphere/common';
+import { logger } from '../common/index';
 
 export interface NotificationProvider {
   send(recipient: string, content: string, subject?: string): Promise<boolean>;

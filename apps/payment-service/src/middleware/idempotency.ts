@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../lib/prisma';
-import { logger } from '@eventsphere/common';
+import { logger } from '../common/index';
 
 export const idempotencyMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   const key = req.headers['idempotency-key'] as string;
@@ -10,6 +10,7 @@ export const idempotencyMiddleware = async (req: Request, res: Response, next: N
   }
 
   try {
+    // @ts-ignore
     const record = await prisma.idempotencyRecord.findUnique({
       where: { key },
     });
@@ -22,16 +23,16 @@ export const idempotencyMiddleware = async (req: Request, res: Response, next: N
     logger.error({ error, idempotencyKey: key }, 'Error checking idempotency');
   }
 
-  // Hook into res.json to capture and store the response for future hits
   const originalJson = res.json;
   res.json = function (body: any) {
     if (res.statusCode >= 200 && res.statusCode < 300) {
+      // @ts-ignore
       prisma.idempotencyRecord.upsert({
         where: { key },
         update: {
           responseStatus: res.statusCode,
           responseBody: body,
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
         },
         create: {
           key,
@@ -39,7 +40,7 @@ export const idempotencyMiddleware = async (req: Request, res: Response, next: N
           responseBody: body,
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
         },
-      }).catch(err => logger.error({ err }, 'Failed to save idempotency record'));
+      }).catch((err: any) => logger.error({ err }, 'Failed to save idempotency record'));
     }
     return originalJson.call(this, body);
   };

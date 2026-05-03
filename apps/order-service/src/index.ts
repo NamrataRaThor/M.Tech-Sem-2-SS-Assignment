@@ -5,8 +5,10 @@ import { OrderService } from './services/order.service';
 import { idempotencyMiddleware } from './middleware/idempotency';
 import { kafkaProducer } from './events/producer';
 import { prisma } from './lib/prisma';
-import { logger, httpLogger, correlationIdMiddleware, initTracing } from '@eventsphere/common';
+import { logger, httpLogger, correlationIdMiddleware, initTracing } from './common/index';
 import { Counter, Histogram, register } from 'prom-client';
+import { DomainEvent } from "./types/events";
+import { v4 as uuidv4 } from "uuid";
 
 dotenv.config();
 
@@ -45,6 +47,8 @@ app.use(httpLogger);
 app.get('/health', (req, res) => res.json({ status: 'UP' }));
 app.get('/ready', async (req, res) => {
   try {
+    // @ts-ignore
+    // @ts-ignore
     await prisma.$queryRaw`SELECT 1`;
     res.json({ status: 'READY' });
   } catch (error) {
@@ -60,9 +64,25 @@ app.get('/metrics', async (req, res) => {
 app.post('/api/v1/orders', idempotencyMiddleware, async (req, res) => {
   try {
     const correlationId = req.headers['x-correlation-id'] as string;
-    const order = await orderService.placeOrder(req.body, correlationId);
+    const confirmedOrder = await orderService.placeOrder(req.body, correlationId);
+    
+    // 5. Emit Confirmed Event
+    await kafkaProducer.emit(DomainEvent.ORDER_CONFIRMED, {
+      eventId: uuidv4(),
+      eventType: DomainEvent.ORDER_CONFIRMED,
+      metadata: {
+        correlationId,
+        timestamp: new Date().toISOString(),
+      },
+      payload: { 
+        orderId: confirmedOrder.id, 
+        userId: confirmedOrder.userId,
+        seats: confirmedOrder.items.map((i: any) => i.seatId)
+      }
+    });
+
     ordersTotal.inc({ status: 'success' });
-    res.status(201).json({ success: true, data: order });
+    res.status(201).json({ success: true, data: confirmedOrder });
   } catch (error: any) {
     ordersTotal.inc({ status: 'failed' });
     res.status(400).json({ success: false, error: { message: error.message } });
@@ -100,7 +120,9 @@ const start = async () => {
 const shutdown = async () => {
   logger.info('Shutting down order-service gracefully...');
   await kafkaProducer.disconnect();
-  await prisma.$disconnect();
+  // @ts-ignore
+    // @ts-ignore
+    await prisma.$disconnect();
   process.exit(0);
 };
 

@@ -55,6 +55,7 @@ services:
       - zookeeper
     ports:
       - "9092:9092"
+      - "29092:29092"
     volumes:
       - kafka_data:/var/lib/kafka/data
     environment:
@@ -88,6 +89,7 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning
 
   loki:
     image: grafana/loki:latest

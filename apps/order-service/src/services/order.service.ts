@@ -2,10 +2,10 @@ import { OrderRepository } from '../repositories/order.repository';
 import { calculateTax, calculateTotal } from '../calculations/tax';
 import { seatingClient, paymentClient } from '../clients';
 import { kafkaProducer } from '../events/producer';
-import { DomainEvent } from '@eventsphere/contracts';
+import { DomainEvent } from "../types/events";
+import { v4 as uuidv4 } from "uuid";
 import { sagaRollbacksTotal, sagaDuration } from '../index';
-import { logger } from '@eventsphere/common';
-import { v4 as uuidv4 } from 'uuid';
+import { logger } from '../common/index';
 
 export class OrderService {
   private repository = new OrderRepository();
@@ -57,20 +57,6 @@ export class OrderService {
           const confirmedOrder = await this.repository.updateStatus(order.id, 'CONFIRMED');
           logger.info({ orderId: order.id }, 'Order confirmed successfully');
           
-          // 5. Emit Confirmed Event
-          await kafkaProducer.emit(DomainEvent.ORDER_CONFIRMED, {
-            eventId: uuidv4(),
-            eventType: DomainEvent.ORDER_CONFIRMED,
-            timestamp: new Date().toISOString(),
-            correlationId,
-            payload: { 
-              orderId: confirmedOrder.id, 
-              userId: confirmedOrder.userId,
-              seats: confirmedOrder.items.map(i => i.seatId)
-            }
-          });
-          
-          endTimer();
           return confirmedOrder;
         } else {
           throw new Error('Payment failed');
@@ -85,8 +71,10 @@ export class OrderService {
         kafkaProducer.emit(DomainEvent.ORDER_FAILED, {
           eventId: uuidv4(),
           eventType: DomainEvent.ORDER_FAILED,
-          timestamp: new Date().toISOString(),
-          correlationId,
+          metadata: {
+            correlationId,
+            timestamp: new Date().toISOString(),
+          },
           payload: { orderId: order.id, reason: error.message }
         }).catch(err => logger.error({ err }, 'Failed to emit failure event'));
 
@@ -113,7 +101,7 @@ export class OrderService {
     await this.repository.updateStatus(orderId, 'CANCELLED');
     
     // Release Seats
-    await seatingClient.release(order.items.map(i => i.seatId), correlationId);
+    await seatingClient.release(order.items.map((i: any) => i.seatId), correlationId);
 
     logger.info({ orderId }, 'Order cancelled and seats released');
     return { success: true };

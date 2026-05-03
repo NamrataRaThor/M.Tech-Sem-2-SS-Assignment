@@ -4,8 +4,7 @@
   "description": "EventSphere: Distributed Event Ticketing & Seat Reservation Platform",
   "private": true,
   "workspaces": [
-    "apps/*",
-    "packages/*"
+    "apps/*"
   ],
   "scripts": {
     "dev": "turbo run dev",
@@ -16,8 +15,17 @@
     "docker:down": "docker-compose -f infra/docker/docker-compose.yml down"
   },
   "devDependencies": {
-    "typescript": "^5.0.0",
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/dotenv": "^6.1.1",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^25.6.0",
+    "prettier": "^3.0.0",
     "turbo": "^1.10.0",
-    "prettier": "^3.0.0"
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "prom-client": "^15.1.3"
   }
 }

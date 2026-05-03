@@ -1,6 +1,6 @@
 import { Kafka, Producer } from 'kafkajs';
-import { logger } from '@eventsphere/common';
-import { EventEnvelope, DomainEvent } from '@eventsphere/contracts';
+import { logger } from '../common/index';
+import { EventEnvelope, DomainEvent } from '../types/events';
 
 export class KafkaProducer {
   private kafka: Kafka;
@@ -9,7 +9,7 @@ export class KafkaProducer {
   constructor() {
     this.kafka = new Kafka({
       clientId: 'payment-service',
-      brokers: (process.env.KAFKA_BROKERS || 'localhost:9092').split(','),
+      brokers: (process.env.KAFKA_BROKERS || 'localhost:29092').split(','),
     });
     this.producer = this.kafka.producer();
   }

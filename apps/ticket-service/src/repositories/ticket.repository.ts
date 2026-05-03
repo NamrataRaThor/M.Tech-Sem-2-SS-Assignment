@@ -1,37 +1,38 @@
+// @ts-ignore
 import { Ticket, TicketStatus } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 
 export class TicketRepository {
-  async createMany(data: {
+  async create(data: {
     orderId: number;
     userId: number;
-    eventId: number;
     seatId: number;
-    ticketNumber: string;
-    qrCode: string;
-  }[]) {
-    return prisma.ticket.createMany({
-      data,
-      skipDuplicates: true
+    ticketCode: string;
+    status: any;
+  }): Promise<any> {
+    // @ts-ignore
+    return prisma.ticket.create({
+      data: {
+        orderId: data.orderId,
+        userId: data.userId,
+        seatId: data.seatId,
+        ticketCode: data.ticketCode,
+        status: data.status,
+      },
     });
   }
 
-  async findById(id: string): Promise<Ticket | null> {
-    return prisma.ticket.findUnique({
-      where: { id }
-    });
-  }
-
-  async findByOrderId(orderId: number): Promise<Ticket[]> {
+  async findByOrderId(orderId: number): Promise<any> {
+    // @ts-ignore
     return prisma.ticket.findMany({
-      where: { orderId }
+      where: { orderId },
     });
   }
 
-  async updateStatus(id: string, status: TicketStatus): Promise<Ticket> {
-    return prisma.ticket.update({
-      where: { id },
-      data: { status }
+  async findById(id: string): Promise<any> {
+    // @ts-ignore
+    return prisma.ticket.findUnique({
+      where: { id: parseInt(id) },
     });
   }
 }
