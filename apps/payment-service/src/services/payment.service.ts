@@ -32,7 +32,8 @@ export class PaymentService {
       amount: data.amount,
       method: data.method,
       transactionId: gatewayResponse.transactionId,
-      status: gatewayResponse.success ? 'SUCCESS' : 'FAILED'
+      status: gatewayResponse.success ? 'SUCCESS' : 'FAILED',
+      idempotencyKey: data.idempotencyKey // Pass the key
     });
 
     // 4. Emit Events & Return
@@ -67,8 +68,8 @@ export class PaymentService {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    // 90% success rate
-    const success = Math.random() < 0.9;
+    // Always succeed for testing (can be Math.random() < 0.9 later)
+    const success = true; 
     return {
       success,
       transactionId: `tx-${uuidv4().substring(0, 8)}`,

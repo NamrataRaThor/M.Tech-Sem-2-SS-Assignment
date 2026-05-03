@@ -103,7 +103,7 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 20,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -165,13 +165,13 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(promhttp_metric_handler_requests_total[1m])) by (job)",
+          "expr": "rate({__name__=~\".*process_cpu_seconds_total\"}[1m])",
           "legendFormat": "{{job}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "API Traffic (Requests/sec)",
+      "title": "Service Activity (CPU Heartbeat)",
       "type": "timeseries"
     },
     {
@@ -202,11 +202,11 @@
             "type": "loki",
             "uid": "Loki"
           },
-          "expr": "{container_name=~\".+\"}",
+          "expr": "{job=~\".+\"}",
           "refId": "A"
         }
       ],
-      "title": "Infrastructure Logs (Postgres, Kafka, etc.)",
+      "title": "Infrastructure Logs (Real-time DB/Kafka)",
       "type": "logs"
     }
   ],
@@ -225,6 +225,6 @@
   "timezone": "",
   "title": "EventSphere Microservices Overview",
   "uid": "eventsphere-overview",
-  "version": 2,
+  "version": 4,
   "weekStart": ""
 }

@@ -27,7 +27,7 @@ export class OrderService {
         throw new Error('Failed to reserve seats');
       }
 
-      const reservedSeats = reservation.data.seats;
+      const reservedSeats = reservation.data;
       const subtotal = reservedSeats.reduce((sum: number, seat: any) => sum + seat.price, 0);
       const tax = calculateTax(subtotal);
       const total = calculateTotal(subtotal, tax);

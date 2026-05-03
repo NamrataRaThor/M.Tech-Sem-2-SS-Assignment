@@ -1,19 +1,29 @@
 import axios from 'axios';
 
-const SEATING_SERVICE_URL = process.env.SEATING_SERVICE_URL || 'http://seating-service:8083';
-const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || 'http://payment-service:8084';
+const getSeatingUrl = () => process.env.SEATING_SERVICE_URL || 'http://localhost:8083';
+const getPaymentUrl = () => process.env.PAYMENT_SERVICE_URL || 'http://localhost:8084';
 
 export const seatingClient = {
   reserve: async (eventId: number, seatIds: number[], correlationId: string) => {
-    const response = await axios.post(`${SEATING_SERVICE_URL}/api/v1/seats/reserve`, {
-      eventId,
-      seatIds,
-      orderId: 0 // Placeholder
-    }, { headers: { 'x-correlation-id': correlationId } });
-    return response.data;
+    const baseUrl = getSeatingUrl();
+    const url = `${baseUrl}/api/v1/seats/reserve`;
+    console.log(`[OrderService] Calling Seating Service: ${url} with seats: ${seatIds}`);
+    
+    try {
+      const response = await axios.post(url, {
+        eventId,
+        seatIds,
+        orderId: 0
+      }, { headers: { 'x-correlation-id': correlationId } });
+      return response.data;
+    } catch (error: any) {
+      console.error(`[OrderService] Seating Service FAILED: ${url}. Status: ${error.response?.status}, Error: ${error.message}`);
+      throw error;
+    }
   },
   release: async (seatIds: number[], correlationId: string) => {
-    const response = await axios.post(`${SEATING_SERVICE_URL}/api/v1/seats/release`, {
+    const url = `${getSeatingUrl()}/api/v1/seats/release`;
+    const response = await axios.post(url, {
       seatIds
     }, { headers: { 'x-correlation-id': correlationId } });
     return response.data;
@@ -22,7 +32,8 @@ export const seatingClient = {
 
 export const paymentClient = {
   charge: async (data: { orderId: number; amount: number; method: string; idempotencyKey: string }, correlationId: string) => {
-    const response = await axios.post(`${PAYMENT_SERVICE_URL}/api/v1/payments/charge`, data, {
+    const url = `${getPaymentUrl()}/api/v1/payments/charge`;
+    const response = await axios.post(url, data, {
       headers: {
         'idempotency-key': data.idempotencyKey,
         'x-correlation-id': correlationId

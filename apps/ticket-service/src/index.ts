@@ -7,7 +7,7 @@ import { prisma } from './lib/prisma';
 import { logger, httpLogger, correlationIdMiddleware, initTracing } from './common/index';
 import { Counter, register } from 'prom-client';
 
-dotenv.config();
+dotenv.config({ override: true });
 
 // Initialize Tracing
 initTracing('ticket-service');

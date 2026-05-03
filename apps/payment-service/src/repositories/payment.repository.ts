@@ -5,19 +5,21 @@ import { prisma } from '../lib/prisma';
 export class PaymentRepository {
   async create(data: {
     orderId: number;
-    amount: Float32Array | number;
+    amount: number;
     method: string;
     transactionId: string;
     status: any;
+    idempotencyKey: string;
   }): Promise<any> {
     // @ts-ignore
     return prisma.payment.create({
       data: {
         orderId: data.orderId,
-        amount: data.amount as any,
+        amount: data.amount,
         method: data.method,
         transactionId: data.transactionId,
         status: data.status,
+        idempotencyKey: data.idempotencyKey,
       },
     });
   }

@@ -7,7 +7,7 @@ import { PrismaClient } from '@prisma/client';
 import { logger, httpLogger, correlationIdMiddleware, initTracing } from './common/index';
 import { collectDefaultMetrics } from 'prom-client';
 
-dotenv.config();
+dotenv.config({ override: true });
 
 // Initialize Tracing
 initTracing('identity-service');

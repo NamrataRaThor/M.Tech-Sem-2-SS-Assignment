@@ -7,7 +7,7 @@ import { kafkaProducer } from './events/producer';
 import { logger, httpLogger, correlationIdMiddleware, initTracing } from './common/index';
 import { Counter, register } from 'prom-client';
 
-dotenv.config();
+dotenv.config({ override: true });
 
 // Initialize Tracing
 initTracing('payment-service');
@@ -36,7 +36,7 @@ app.get('/metrics', async (req, res) => {
 });
 
 // Payment Routes
-app.post('/api/v1/payments', idempotencyMiddleware, async (req, res) => {
+app.post('/api/v1/payments/charge', idempotencyMiddleware, async (req, res) => {
   try {
     const correlationId = req.headers['x-correlation-id'] as string;
     const result = await paymentService.processPayment(req.body, correlationId);

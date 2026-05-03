@@ -1,6 +1,8 @@
+import dotenv from 'dotenv';
+dotenv.config({ override: true });
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { OrderService } from './services/order.service';
 import { idempotencyMiddleware } from './middleware/idempotency';
 import { kafkaProducer } from './events/producer';
@@ -9,8 +11,6 @@ import { logger, httpLogger, correlationIdMiddleware, initTracing } from './comm
 import { Counter, Histogram, register } from 'prom-client';
 import { DomainEvent } from "./types/events";
 import { v4 as uuidv4 } from "uuid";
-
-dotenv.config();
 
 // Initialize Tracing
 initTracing('order-service');
@@ -48,7 +48,6 @@ app.get('/health', (req, res) => res.json({ status: 'UP' }));
 app.get('/ready', async (req, res) => {
   try {
     // @ts-ignore
-    // @ts-ignore
     await prisma.$queryRaw`SELECT 1`;
     res.json({ status: 'READY' });
   } catch (error) {
@@ -64,7 +63,19 @@ app.get('/metrics', async (req, res) => {
 app.post('/api/v1/orders', idempotencyMiddleware, async (req, res) => {
   try {
     const correlationId = req.headers['x-correlation-id'] as string;
-    const confirmedOrder = await orderService.placeOrder(req.body, correlationId);
+    
+    // Fix: Extract userId from header (sent by API Gateway)
+    const userId = parseInt(req.headers['x-user-id'] as string || '1');
+    
+    // Fix: Map paymentMethodId from body to paymentMethod
+    const orderData = {
+      userId,
+      eventId: req.body.eventId,
+      seatIds: req.body.seatIds,
+      paymentMethod: req.body.paymentMethodId || req.body.paymentMethod || 'pm_card_visa'
+    };
+
+    const confirmedOrder = await orderService.placeOrder(orderData, correlationId);
     
     // 5. Emit Confirmed Event
     await kafkaProducer.emit(DomainEvent.ORDER_CONFIRMED, {
@@ -85,6 +96,7 @@ app.post('/api/v1/orders', idempotencyMiddleware, async (req, res) => {
     res.status(201).json({ success: true, data: confirmedOrder });
   } catch (error: any) {
     ordersTotal.inc({ status: 'failed' });
+    logger.error({ error: error.message }, 'Order creation failed at controller');
     res.status(400).json({ success: false, error: { message: error.message } });
   }
 });
@@ -121,8 +133,7 @@ const shutdown = async () => {
   logger.info('Shutting down order-service gracefully...');
   await kafkaProducer.disconnect();
   // @ts-ignore
-    // @ts-ignore
-    await prisma.$disconnect();
+  await prisma.$disconnect();
   process.exit(0);
 };
 
